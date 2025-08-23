@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import decorators
 from models import UserRole
+from contextlib import asynccontextmanager
 
 
 def make_message():
@@ -39,7 +40,12 @@ def test_role_required_allows(monkeypatch):
         async def get_or_create_user(self, *args, **kwargs):
             return SimpleNamespace(role=UserRole.admin.value), False
 
-    monkeypatch.setattr(decorators, 'UserService', lambda: FakeService())
+    @asynccontextmanager
+    async def fake_session():
+        yield None
+
+    monkeypatch.setattr(decorators, 'get_session', fake_session)
+    monkeypatch.setattr(decorators, 'UserService', lambda session: FakeService())
 
     async def run():
         wrapped = decorators.role_required(UserRole.single)(handler)
@@ -68,7 +74,12 @@ def test_role_required_denies(monkeypatch):
         async def get_or_create_user(self, *args, **kwargs):
             return SimpleNamespace(role=UserRole.single.value), False
 
-    monkeypatch.setattr(decorators, 'UserService', lambda: FakeService())
+    @asynccontextmanager
+    async def fake_session():
+        yield None
+
+    monkeypatch.setattr(decorators, 'get_session', fake_session)
+    monkeypatch.setattr(decorators, 'UserService', lambda session: FakeService())
 
     async def run():
         wrapped = decorators.role_required(UserRole.admin)(handler)
@@ -101,7 +112,12 @@ def test_group_required_adds_user(monkeypatch):
         async def add_user_to_group(self, *args, **kwargs):
             return True, 'added'
 
-    monkeypatch.setattr(decorators, 'UserService', lambda: FakeService())
+    @asynccontextmanager
+    async def fake_session():
+        yield None
+
+    monkeypatch.setattr(decorators, 'get_session', fake_session)
+    monkeypatch.setattr(decorators, 'UserService', lambda session: FakeService())
 
     async def run():
         wrapped = await decorators.group_required(handler)
@@ -134,7 +150,12 @@ def test_group_required_add_user_fail(monkeypatch):
         async def add_user_to_group(self, *args, **kwargs):
             return False, 'error'
 
-    monkeypatch.setattr(decorators, 'UserService', lambda: FakeService())
+    @asynccontextmanager
+    async def fake_session():
+        yield None
+
+    monkeypatch.setattr(decorators, 'get_session', fake_session)
+    monkeypatch.setattr(decorators, 'UserService', lambda session: FakeService())
 
     async def run():
         wrapped = await decorators.group_required(handler)

@@ -1,5 +1,4 @@
 # /sd/tg/LeonidBot/services/telegram.py
-from db import async_session
 from logger import logger
 from models import User, Group, UserGroup, UserRole, LogSettings, LogLevel, GroupType
 from sqlalchemy.future import select
@@ -11,12 +10,11 @@ from aiogram import Bot
 
 
 class UserService:
-    def __init__(self):
+    def __init__(self, session):
         self.admin_chat_id = None
-        self.session = None
+        self.session = session
 
     async def __aenter__(self):
-        self.session = async_session()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -24,7 +22,6 @@ class UserService:
             await self.session.commit()
         else:
             await self.session.rollback()
-        await self.session.close()
 
     # ==== USER METHODS ====
     async def get_or_create_user(self, telegram_id: int, **kwargs) -> Tuple[User, bool]:
@@ -244,12 +241,3 @@ class UserService:
         except Exception as e:
             logger.error(f"Ошибка отправки лога в Telegram: {e}")
             return False
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        try:
-            if exc_type is None:
-                await self.session.commit()
-            else:
-                await self.session.rollback()
-        finally:
-            await self.session.close()  # Всегда закрываем сессию

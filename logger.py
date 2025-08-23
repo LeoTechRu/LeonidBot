@@ -9,6 +9,7 @@ from typing import Callable, Dict, Any, Optional
 import logging
 import os
 from models import LogLevel
+from web.dependencies import get_session
 
 # Настройка базового логгера (только консоль)
 logging.basicConfig(
@@ -132,30 +133,31 @@ class LoggerMiddleware(BaseMiddleware):
         # Отправляем в Telegram только если уровень соответствует настройкам
         try:
             from services.telegram import UserService
-            async with UserService() as user_service:
-                settings = await user_service.get_log_settings()
-                current_level = settings.level if settings else LogLevel.DEBUG
-                chat_id = settings.chat_id if settings else self.admin_chat_id
+            async with get_session() as session:
+                async with UserService(session) as user_service:
+                    settings = await user_service.get_log_settings()
+                    current_level = settings.level if settings else LogLevel.DEBUG
+                    chat_id = settings.chat_id if settings else self.admin_chat_id
 
-                # Проверяем, нужно ли отправлять лог
-                if level.value < current_level.value:
-                    return
+                    # Проверяем, нужно ли отправлять лог
+                    if level.value < current_level.value:
+                        return
 
-                # Формируем сообщение
-                formatted_message = (
-                    f"[{level.name}] "
-                    f"{message}\n"
-                    f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-                )
-                # Экранируем специальные символы MarkdownV2
-                escaped_message = escape_markdown_v2(formatted_message)
-                # Отправляем в Telegram
-                if chat_id:
-                    await self.bot.send_message(
-                        chat_id=chat_id,
-                        text=escaped_message,
-                        parse_mode="MarkdownV2"
+                    # Формируем сообщение
+                    formatted_message = (
+                        f"[{level.name}] "
+                        f"{message}\n"
+                        f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
                     )
+                    # Экранируем специальные символы MarkdownV2
+                    escaped_message = escape_markdown_v2(formatted_message)
+                    # Отправляем в Telegram
+                    if chat_id:
+                        await self.bot.send_message(
+                            chat_id=chat_id,
+                            text=escaped_message,
+                            parse_mode="MarkdownV2"
+                        )
         except Exception as e:
             logger.critical(f"Критическая ошибка отправки лога в Telegram: {e}")
 

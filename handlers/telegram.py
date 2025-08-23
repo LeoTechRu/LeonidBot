@@ -11,6 +11,7 @@ from typing import Callable
 from decorators import role_required, group_required
 from models import User, GroupType, LogLevel, UserRole
 from services.telegram import UserService
+from web.dependencies import get_session
 
 # ==============================
 # РОУТЕРЫ
@@ -37,8 +38,9 @@ async def process_data_input(
         await message.answer(error_msg)
         return
 
-    async with UserService() as user_service:
-        success = await update_method(user_service, message.from_user.id, data)
+    async with get_session() as session:
+        async with UserService(session) as user_service:
+            success = await update_method(user_service, message.from_user.id, data)
 
     if success:
         await message.answer(success_msg.format(data=data))
@@ -98,14 +100,15 @@ async def cmd_cancel(message: Message, state: FSMContext):
 @user_router.message(Command("birthday"))
 @user_router.message(F.text.lower() == "день рождение")
 async def cmd_birthday(message: Message, state: FSMContext):
-    async with UserService() as user_service:
-        user_db = await user_service.get_user_by_telegram_id(message.from_user.id)
-        if user_db and user_db.birthday:
-            today = datetime.today().date()
-            this_year_birthday = user_db.birthday.replace(year=today.year)
-            if this_year_birthday < today:
-                this_year_birthday = this_year_birthday.replace(year=today.year + 1)
-            days_left = (this_year_birthday - today).days
+    async with get_session() as session:
+        async with UserService(session) as user_service:
+            user_db = await user_service.get_user_by_telegram_id(message.from_user.id)
+            if user_db and user_db.birthday:
+                today = datetime.today().date()
+                this_year_birthday = user_db.birthday.replace(year=today.year)
+                if this_year_birthday < today:
+                    this_year_birthday = this_year_birthday.replace(year=today.year + 1)
+                days_left = (this_year_birthday - today).days
             if days_left == 0:
                 await message.answer(f"{message.from_user.first_name}, сегодня ваш день рождения! 🎉 ({user_db.birthday.strftime('%d.%m.%Y')})")
             else:
@@ -117,14 +120,15 @@ async def cmd_birthday(message: Message, state: FSMContext):
 @user_router.message(Command("contact"))
 @user_router.message(F.text.lower().in_(["контакт", "профиль"]))
 async def cmd_contact(message: Message):
-    async with UserService() as user_service:
-        user_db = await user_service.get_user_by_telegram_id(message.from_user.id)
-        if user_db:
-            contact_info = f"{message.from_user.first_name}, контактные данные:\n"
-            contact_info += f"Telegram ID: {user_db.telegram_id}\n"
-            if user_db.username:
-                contact_info += f"Username: @{user_db.username}\n"
-            if user_db.full_display_name:
+    async with get_session() as session:
+        async with UserService(session) as user_service:
+            user_db = await user_service.get_user_by_telegram_id(message.from_user.id)
+            if user_db:
+                contact_info = f"{message.from_user.first_name}, контактные данные:\n"
+                contact_info += f"Telegram ID: {user_db.telegram_id}\n"
+                if user_db.username:
+                    contact_info += f"Username: @{user_db.username}\n"
+                if user_db.full_display_name:
                 contact_info += f"Отображаемое имя: {user_db.full_display_name}\n"
             elif user_db.first_name or user_db.last_name:
                 contact_info += f"Имя: {user_db.first_name or ''} {user_db.last_name or ''}\n"
@@ -148,30 +152,31 @@ async def cmd_contact(message: Message):
 @group_router.message(Command("group"))
 @group_router.message(F.text.lower().in_(["группа", "group"]))
 async def cmd_group(message: Message):
-    async with UserService() as user_service:
-        chat = message.chat
-        chat_title = chat.title or f"{message.from_user.first_name} группа"
-        group = await user_service.get_group_by_telegram_id(chat.id)
-        if not group:
-            group = await user_service.create_group(
-                telegram_id=chat.id,
-                title=chat.title or chat_title,
-                type=GroupType(chat.type.lower()),
-                owner_id=message.from_user.id
-            )
-            await message.answer(f"Группа '{chat_title}' добавлена в БД. Вы — её создатель.")
-            return
-        is_member = await user_service.is_user_in_group(message.from_user.id, chat.id)
-        if not is_member:
-            success, response = await user_service.add_user_to_group(message.from_user.id, chat.id)
-            await message.answer(response if success else f"Ошибка: {response}")
-            return
-        members = await user_service.get_group_members(chat.id)
-        if members:
-            member_list = "\n".join([m.full_display_name or m.first_name for m in members])
-            await message.answer(f"Участники группы '{chat_title}':\n{member_list}")
-        else:
-            await message.answer("Группа пока пуста.")
+    async with get_session() as session:
+        async with UserService(session) as user_service:
+            chat = message.chat
+            chat_title = chat.title or f"{message.from_user.first_name} группа"
+            group = await user_service.get_group_by_telegram_id(chat.id)
+            if not group:
+                group = await user_service.create_group(
+                    telegram_id=chat.id,
+                    title=chat.title or chat_title,
+                    type=GroupType(chat.type.lower()),
+                    owner_id=message.from_user.id
+                )
+                await message.answer(f"Группа '{chat_title}' добавлена в БД. Вы — её создатель.")
+                return
+            is_member = await user_service.is_user_in_group(message.from_user.id, chat.id)
+            if not is_member:
+                success, response = await user_service.add_user_to_group(message.from_user.id, chat.id)
+                await message.answer(response if success else f"Ошибка: {response}")
+                return
+            members = await user_service.get_group_members(chat.id)
+            if members:
+                member_list = "\n".join([m.full_display_name or m.first_name for m in members])
+                await message.answer(f"Участники группы '{chat_title}':\n{member_list}")
+            else:
+                await message.answer("Группа пока пуста.")
 
 # -----------------------------
 # Логирование
@@ -188,20 +193,22 @@ async def cmd_set_log_level(message: Message):
     if level not in ["DEBUG", "INFO", "ERROR"]:
         await message.answer("Недопустимый уровень: используйте DEBUG, INFO или ERROR")
         return
-    async with UserService() as user_service:
-        success = await user_service.update_log_level(LogLevel(level), chat_id=message.chat.id)
-        if success:
-            await message.answer(f"Уровень логирования установлен: {level}")
-        else:
-            await message.answer("Не удалось обновить настройки логирования")
+    async with get_session() as session:
+        async with UserService(session) as user_service:
+            success = await user_service.update_log_level(LogLevel(level), chat_id=message.chat.id)
+            if success:
+                await message.answer(f"Уровень логирования установлен: {level}")
+            else:
+                await message.answer("Не удалось обновить настройки логирования")
 
 @user_router.message(Command("getloglevel"))
 async def cmd_get_log_level(message: Message):
-    async with UserService() as user_service:
-        log_settings = await user_service.get_log_settings()
-        current_level = log_settings.level if log_settings else LogLevel.ERROR
-        chat_id = log_settings.chat_id if log_settings else "не задан"
-        await message.answer(f"Текущий уровень: {current_level}\nГруппа для логов: {chat_id}")
+    async with get_session() as session:
+        async with UserService(session) as user_service:
+            log_settings = await user_service.get_log_settings()
+            current_level = log_settings.level if log_settings else LogLevel.ERROR
+            chat_id = log_settings.chat_id if log_settings else "не задан"
+            await message.answer(f"Текущий уровень: {current_level}\nГруппа для логов: {chat_id}")
 
 # Универсальный хендлер (ловит всё, что не подошло выше)
 log_chat_id = -1002662867876
