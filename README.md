@@ -34,41 +34,34 @@
 - [ ] Тесты и CI/CD для бота и веб-сервера
 - [ ] Дополнительные модули: заметки, трекер привычек, учёт финансов, интеграция с внешними задачниками и календарями.
 
-## Telegram Login Widget
+## Веб-морда
 
-Веб-интерфейс использует виджет входа в Telegram для аутентификации. Настройте виджет с помощью следующих переменных окружения:
-
-| Переменные | Описание |
-|----------|-------------|
-| `BOT_USERNAME` | Имя пользователя Telegram-бота, указанное в виджете (`data-telegram-login`). |
-| `BOT_TOKEN` | Токен бота, используемый для проверки данных авторизации. |
-| `WEB_APP_URL` | Базовый URL-адрес, по которому работает сервер FastAPI. |
-| `LOGIN_REDIRECT_URL` | URL обратного вызова передан в поле `data-auth-url`. |
-
-Пример фрагмента виджета:
-
-```html
-<script async src="https://telegram.org/js/telegram-widget.js"
-        data-telegram-login="${BOT_USERNAME}"
-        data-size="large"
-        data-auth-url="${LOGIN_REDIRECT_URL}"
-        data-request-access="write"></script>
+### .env (repo root)
+```
+BOT_TOKEN=123456789:AA...your...token
+TELEGRAM_BOT_USERNAME=YourBotName   # БЕЗ @
+PUBLIC_BASE_URL=https://bot.example.com
+SESSION_MAX_AGE=86400
 ```
 
-## Запуск сервера FastAPI
+### Telegram Login Widget
+- В @BotFather выполните `/setdomain` и укажите домен, на котором открывается страница `/auth/login` (без схемы).
+- Убедитесь, что в коде используется корректный `TELEGRAM_BOT_USERNAME` (без `@`).
+- Если видите «Bot domain invalid» — домен страницы не совпадает с доменом, заданным ботом в @BotFather, либо указан неверный username.
 
-Установите зависимости и запустите сервер:
-
-```bash
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 5800 --reload
+### Запуск
+```
+uvicorn main:app --host 0.0.0.0 --port 5800
+# или
+uvicorn web:app  --host 0.0.0.0 --port 5800
 ```
 
-Альтернативно можно запускать веб-приложение напрямую:
-
-```bash
-uvicorn web:app --host 0.0.0.0 --port 5800 --reload
-```
+### Маршруты
+- `/` → редирект на `/auth/login`
+- `/auth/login` — страница входа через Telegram
+- `/auth/callback` — обработчик колбэка (проверка подписи, создание пользователя)
+- `/admin` → редирект на `/admin/users`
+- `/admin/users`, `/admin/groups`, `/profile/{telegram_id}` — как в текущем коде
 
 ## Панель администратора на основе ролей
 
