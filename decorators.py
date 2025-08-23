@@ -3,7 +3,7 @@ from functools import wraps
 from aiogram.types import Message
 from core.services.telegram import UserService
 from core.models import UserRole, GroupType
-from logger import logger
+from core.logger import logger
 
 def role_required(role: UserRole):
     """Декоратор для проверки прав доступа к командам"""

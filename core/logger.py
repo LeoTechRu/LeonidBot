@@ -1,4 +1,4 @@
-# /sd/tg/LeonidBot/logger.py
+# Logger utilities for bot and web modules
 from datetime import datetime
 
 from aiogram import BaseMiddleware, Bot

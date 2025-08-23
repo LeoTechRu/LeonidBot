@@ -73,13 +73,7 @@ async def update_profile(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
     async with UserService() as user_service:
-        user = await user_service.get_user_by_telegram_id(telegram_id)
+        user = await user_service.update_user(telegram_id, **data)
         if user is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-        # Update allowed fields
-        for field, value in data.items():
-            if hasattr(user, field):
-                setattr(user, field, value)
-
     return templates.TemplateResponse(request, "profile.html", {"user": user})

@@ -6,7 +6,7 @@ from aiogram.exceptions import TelegramNetworkError
 
 from core.db import bot, dp
 from bot.handlers.telegram import user_router, group_router, router
-from logger import LoggerMiddleware
+from core.logger import LoggerMiddleware
 
 
 async def main() -> None:

@@ -1,4 +1,4 @@
-from logger import escape_markdown_v2
+from core.logger import escape_markdown_v2
 
 
 def test_escape_markdown_v2():

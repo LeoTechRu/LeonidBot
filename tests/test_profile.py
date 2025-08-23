@@ -22,6 +22,15 @@ class FakeService:
     async def get_user_by_telegram_id(self, telegram_id: int):
         return self.users.get(telegram_id)
 
+    async def update_user(self, telegram_id: int, **fields):
+        user = self.users.get(telegram_id)
+        if not user:
+            return None
+        for field, value in fields.items():
+            if hasattr(user, field):
+                setattr(user, field, value)
+        return user
+
 
 app = FastAPI()
 # Patch UserService in profile module

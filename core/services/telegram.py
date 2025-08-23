@@ -1,6 +1,6 @@
 # /sd/tg/LeonidBot/core/services/telegram.py
-import core.db
-from logger import logger
+import core.db as db
+from core.logger import logger
 from core.models import (
     User,
     Group,
@@ -12,7 +12,7 @@ from core.models import (
 )
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Union
 from datetime import datetime, timedelta
 import os
 from aiogram import Bot
@@ -39,7 +39,7 @@ class UserService:
         self,
         telegram_id: int,
         *,
-        role: UserRole = UserRole.single,
+        role: Union[UserRole, int] = UserRole.single,
         **kwargs,
     ) -> Tuple[User, bool]:
         """Получает или создает пользователя с автоматическим заполнением данных"""
@@ -47,10 +47,16 @@ class UserService:
         if user:
             return user, False
 
+        role_value = role if isinstance(role, int) else role.value
+        admins_raw = os.getenv("ADMIN_TELEGRAM_IDS", "")
+        admin_ids = [int(x.strip()) for x in admins_raw.split(",") if x.strip().isdigit()]
+        if role_value == UserRole.single.value and telegram_id in admin_ids:
+            role_value = UserRole.admin.value
+
         required_fields = {
             "telegram_id": telegram_id,
             "first_name": kwargs.get("first_name", f"User_{telegram_id}"),
-            "role": role.value,
+            "role": role_value,
         }
         if "id" in kwargs:
             required_fields["id"] = kwargs["id"]
@@ -75,6 +81,11 @@ class UserService:
             logger.error(f"Ошибка получения пользователя: {e}")
             return None
 
+    async def list_users(self) -> List[User]:
+        """Возвращает всех пользователей"""
+        result = await self.session.execute(select(User))
+        return result.scalars().all()
+
     async def create_user(self, **kwargs) -> Optional[User]:
         """Создает нового пользователя в БД"""
         try:
@@ -96,6 +107,21 @@ class UserService:
             logger.error(f"Неожиданная ошибка при создании пользователя: {e}")
             return None
 
+    async def update_user(self, telegram_id: int, **fields) -> Optional[User]:
+        """Обновляет произвольные поля пользователя"""
+        user = await self.get_user_by_telegram_id(telegram_id)
+        if not user:
+            return None
+        for field, value in fields.items():
+            if hasattr(user, field):
+                setattr(user, field, value)
+        try:
+            await self.session.flush()
+            return user
+        except Exception as e:
+            logger.error(f"Ошибка обновления пользователя: {e}")
+            return None
+
     async def update_user_role(self, telegram_id: int, new_role: UserRole) -> bool:
         """Обновляет роль пользователя в БД"""
         user = await self.get_user_by_telegram_id(telegram_id)
@@ -111,6 +137,11 @@ class UserService:
             return False
 
     # ==== GROUP METHODS ====
+    async def list_groups(self) -> List[Group]:
+        """Возвращает все группы"""
+        result = await self.session.execute(select(Group))
+        return result.scalars().all()
+
     async def get_or_create_group(self, telegram_id: int, **kwargs) -> Tuple[Group, bool]:
         """Получает или создает группу с автоматическим заполнением данных"""
         group = await self.get_group_by_telegram_id(telegram_id)

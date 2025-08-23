@@ -221,7 +221,7 @@ async def unknown_message_handler(message: Message):
 async def handle_admin_reply(message: Message):
     from core.db import bot
     from aiogram.exceptions import TelegramAPIError
-    from logger import logger
+    from core.logger import logger
     if message.reply_to_message:
         # Ищем метаданные в тексте ответа или в reply_to_message
         meta_match = re.search(r"\|\|origin_chat_id:(\d+)\|origin_msg_id:(\d+)\|\|", message.reply_to_message.text)

@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
-from core.models import User, Group, UserRole
+from core.models import UserRole
 from core.services.telegram import UserService
-from sqlalchemy import select
 from ..dependencies import role_required
 
 
@@ -15,8 +14,7 @@ router = APIRouter(dependencies=[Depends(role_required(UserRole.admin))])
 async def list_users(request: Request):
     """Render a page with all registered users."""
     async with UserService() as service:
-        result = await service.session.execute(select(User))
-        users = result.scalars().all()
+        users = await service.list_users()
     return templates.TemplateResponse(
         "admin/users.html",
         {"request": request, "users": users, "UserRole": UserRole},
@@ -38,8 +36,7 @@ async def change_user_role(telegram_id: int, role: UserRole):
 async def list_groups(request: Request):
     """Render a page with all groups and their members."""
     async with UserService() as service:
-        result = await service.session.execute(select(Group))
-        groups = result.scalars().all()
+        groups = await service.list_groups()
         groups_with_members = []
         for group in groups:
             members = await service.get_group_members(group.telegram_id)
