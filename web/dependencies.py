@@ -8,18 +8,27 @@ from services.telegram import UserService
 
 
 async def get_current_user(request: Request) -> User:
-    """Extract the current user from request headers.
+    """Extract the current user from request headers or cookies.
 
     Supports ``X-Telegram-Id`` and ``Authorization: Bearer <id>`` headers
-    so tests and legacy clients can authenticate easily.
+    and additionally falls back to a ``telegram_id`` cookie set after
+    successful login.
     """
     user_id: Optional[int] = None
-    raw = request.headers.get("X-Telegram-Id")
-    if raw:
+    cookie_id = request.cookies.get("telegram_id")
+    if cookie_id:
         try:
-            user_id = int(raw)
+            user_id = int(cookie_id)
         except ValueError as exc:  # pragma: no cover - defensive
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid X-Telegram-Id") from exc
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid cookie") from exc
+
+    if user_id is None:
+        raw = request.headers.get("X-Telegram-Id")
+        if raw:
+            try:
+                user_id = int(raw)
+            except ValueError as exc:  # pragma: no cover - defensive
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid X-Telegram-Id") from exc
 
     if user_id is None:
         auth = request.headers.get("Authorization")
