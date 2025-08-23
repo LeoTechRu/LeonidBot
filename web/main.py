@@ -8,11 +8,15 @@ from typing import Dict
 
 from fastapi import FastAPI, HTTPException, Request, Response
 
-from db import BOT_TOKEN
-from services.telegram import UserService
+from core.db import BOT_TOKEN
+from core.services.telegram import UserService
+from .routes import profile, admin
 
 
 app = FastAPI()
+# Подключаем основные роутеры приложения
+app.include_router(profile.router)
+app.include_router(admin.router, prefix="/admin")
 
 
 def _verify_telegram_auth(data: Dict[str, str]) -> bool:
@@ -60,3 +64,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("web.main:app", host="0.0.0.0", port=8000)
+

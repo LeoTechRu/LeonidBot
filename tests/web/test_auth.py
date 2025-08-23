@@ -2,20 +2,24 @@ import hmac
 import hashlib
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from base import Base
-import db
+import core.db as db
+import core.services.telegram as telegram_service
 
-try:
-    from src.main import app  # type: ignore
-except ModuleNotFoundError:  # fallback if app located differently
-    from main import app  # type: ignore
+from web.main import app  # приложение располагается в пакете web
+import web.main as main
 
 
 BOT_TOKEN = "TEST_TOKEN"
+
+# Используем тестовый токен как в приложении, так и в модуле базы данных
+main.BOT_TOKEN = BOT_TOKEN
+db.BOT_TOKEN = BOT_TOKEN
 
 
 def _generate_hash(data: dict) -> str:
@@ -25,13 +29,15 @@ def _generate_hash(data: dict) -> str:
     return hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
     engine = create_async_engine('sqlite+aiosqlite:///:memory:')
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Подменяем сессии, чтобы использовать тестовую БД SQLite
     db.async_session = async_session
+    telegram_service.async_session = async_session
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
     await engine.dispose()
@@ -51,3 +57,4 @@ async def test_telegram_login_validation(client: AsyncClient):
     data["hash"] = "invalid"
     bad = await client.get("/auth/telegram", params=data)
     assert bad.status_code in {400, 401, 403}
+

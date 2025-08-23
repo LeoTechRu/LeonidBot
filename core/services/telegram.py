@@ -253,11 +253,3 @@ class UserService:
             logger.error(f"Ошибка отправки лога в Telegram: {e}")
             return False
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        try:
-            if exc_type is None:
-                await self.session.commit()
-            else:
-                await self.session.rollback()
-        finally:
-            await self.session.close()  # Всегда закрываем сессию

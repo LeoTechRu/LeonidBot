@@ -28,7 +28,9 @@ class ChannelType(PyEnum):
 class User(Base): # Пользователь
     __tablename__ = 'users'
     
-    id = Column(BigInteger, primary_key=True)
+    # В качестве первичного ключа используем обычный Integer, чтобы SQLite
+    # корректно генерировал значения автоматически.
+    id = Column(Integer, primary_key=True, autoincrement=True)
     telegram_id = Column(BigInteger, unique=True, nullable=False)
     username = Column(String(32))
     first_name = Column(String(255), nullable=False)
@@ -46,7 +48,8 @@ class User(Base): # Пользователь
 class Group(Base): # Группа
     __tablename__ = 'groups'
     
-    id = Column(BigInteger, primary_key=True)
+    # Аналогично модели пользователя — Integer удобнее для auto increment.
+    id = Column(Integer, primary_key=True, autoincrement=True)
     telegram_id = Column(BigInteger, unique=True, nullable=False)  # ID группы в Telegram
     title = Column(String(255), nullable=False)  # Название группы
     type = Column(Enum(GroupType), default=GroupType.private)  # Тип группы
@@ -59,7 +62,8 @@ class Group(Base): # Группа
 class Channel(Base): # Канал
     __tablename__ = 'channels'
     
-    id = Column(BigInteger, primary_key=True)
+    # Автогенерация ID для каналов.
+    id = Column(Integer, primary_key=True, autoincrement=True)
     telegram_id = Column(BigInteger, unique=True, nullable=False)
     title = Column(String(255), nullable=False)
     type = Column(Enum(ChannelType), default=ChannelType.channel)
@@ -87,11 +91,18 @@ class LogLevel(PyEnum):
 
 class LogSettings(Base):
     __tablename__ = 'log_settings'
-    
-    id = Column(BigInteger, primary_key=True)
+
+    # Настройки логера хранятся в отдельной таблице, ID также автогенерируется.
+    id = Column(Integer, primary_key=True, autoincrement=True)
     chat_id = Column(BigInteger, nullable=False)  # ID группы для логов
     level = Column(Enum(LogLevel), default=LogLevel.ERROR)  # Уровень логирования
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-def __repr__(self):
-    return f"<LogSettings(level='{self.level}', chat_id='{self.chat_id}')>"
+    def __repr__(self):
+        """Упрощённое строковое представление для отладки."""
+        # Комментарий: метод принадлежит модели и должен быть
+        # определён внутри класса. В оригинальной версии он
+        # оказался вне класса, что делало его обычной функцией
+        # и приводило к отсутствию удобного вывода в дебаге.
+        return f"<LogSettings(level='{self.level}', chat_id='{self.chat_id}')>"
+

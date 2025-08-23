@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, Request, Form
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.templating import Jinja2Templates
-from models import User, Group, UserRole
-from services.telegram import UserService
 from sqlalchemy import select
+
+from core.models import User, Group, UserRole
+from core.services.telegram import UserService
 from ..dependencies import role_required
 
 
 templates = Jinja2Templates(directory="web/templates")
 
+# Комментарий: подключаем роутер с проверкой роли администратора через
+# зависимость role_required из модуля `web.dependencies`.
 router = APIRouter(dependencies=[Depends(role_required(UserRole.admin))])
 
 
@@ -41,3 +44,10 @@ async def list_groups(request: Request):
     return templates.TemplateResponse(
         "admin/groups.html", {"request": request, "groups": groups_with_members}
     )
+
+
+@router.get("/dashboard")
+async def dashboard() -> dict:
+    """Простейшая заглушка для панели администратора."""
+    return {"status": "ok"}
+

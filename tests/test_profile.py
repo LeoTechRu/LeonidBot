@@ -2,7 +2,7 @@ import types
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from models import User, UserRole
+from core.models import User, UserRole
 from web.routes import profile
 
 
@@ -60,3 +60,4 @@ def test_single_user_can_update_self():
 def test_single_user_cannot_update_others():
     res = client.post("/profile/2", headers=auth_header(1), json={"username": "bad"})
     assert res.status_code == 403
+

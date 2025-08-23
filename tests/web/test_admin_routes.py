@@ -1,25 +1,27 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from base import Base
-from models import User, UserRole
-import db
+from core.models import User, UserRole
+import core.db as db
+import core.services.telegram as telegram_service
 
-try:
-    from src.main import app  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover
-    from main import app  # type: ignore
+# Приложение FastAPI после рефакторинга находится в пакете web
+from web.main import app  # type: ignore
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client():
     engine = create_async_engine('sqlite+aiosqlite:///:memory:')
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Подменяем сессии в модуле базы и сервисах, чтобы использовать SQLite
     db.async_session = async_session
+    telegram_service.async_session = async_session
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
     await engine.dispose()
@@ -48,3 +50,4 @@ async def test_admin_access(client: AsyncClient):
     assert profile.status_code == 200
     admin = await client.get("/admin/dashboard", headers={"X-Telegram-Id": "2"})
     assert admin.status_code == 200
+

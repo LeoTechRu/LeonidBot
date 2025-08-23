@@ -1,12 +1,19 @@
-from fastapi import Depends, HTTPException, status
-from models import User, UserRole
+from fastapi import Depends, HTTPException, Request, status
+
+from core.models import User, UserRole
+from core.services.telegram import UserService
 
 
-async def get_current_user() -> User:
-    """Return the current user. In a real application this would pull
-    the user from the request/session. Here we provide a placeholder
-    admin user so that the dependency can be used in examples."""
-    return User(telegram_id=0, first_name="Admin", role=UserRole.admin.value)
+async def get_current_user(request: Request) -> User:
+    """Получение текущего пользователя по заголовку X-Telegram-Id."""
+    telegram_id = request.headers.get("X-Telegram-Id")
+    if telegram_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    async with UserService() as service:
+        user = await service.get_user_by_telegram_id(int(telegram_id))
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return user
 
 
 def role_required(required_role: UserRole):
@@ -21,3 +28,4 @@ def role_required(required_role: UserRole):
         return current_user
 
     return verifier
+

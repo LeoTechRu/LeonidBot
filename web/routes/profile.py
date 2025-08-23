@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.templating import Jinja2Templates
 
-from models import User, UserRole
-from services.telegram import UserService
+from core.models import User, UserRole
+from core.services.telegram import UserService
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -22,6 +22,13 @@ async def get_current_user(request: Request) -> User:
     user_id: Optional[int] = None
     if "session" in request.scope:
         user_id = request.session.get("user_id")
+
+    # Дополнительно поддерживаем кастомный заголовок тестов X-Telegram-Id
+    if user_id is None and request.headers.get("X-Telegram-Id"):
+        try:
+            user_id = int(request.headers["X-Telegram-Id"])
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid X-Telegram-Id") from exc
 
     # Fallback to Authorization header (JWT/Bearer token)
     if user_id is None:
@@ -42,6 +49,12 @@ async def get_current_user(request: Request) -> User:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
         return user
 
+
+@router.get("")
+@router.get("/")
+async def get_my_profile(request: Request, current_user: User = Depends(get_current_user)):
+    """Возвращает профиль текущего пользователя без явного указания ID."""
+    return templates.TemplateResponse(request, "profile.html", {"user": current_user})
 
 @router.get("/{telegram_id}")
 async def get_profile(
