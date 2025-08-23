@@ -4,6 +4,7 @@ import hashlib
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
+import time
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
@@ -44,12 +45,12 @@ async def test_telegram_login_validation(client: AsyncClient):
     data = {
         "id": 123,
         "first_name": "Test",
-        "auth_date": 111111,
+        "auth_date": int(time.time()),
     }
     data["hash"] = _generate_hash(data)
-    response = await client.get("/auth/telegram", params=data)
+    response = await client.get("/auth/callback", params=data)
     assert response.status_code == 200
 
     data["hash"] = "invalid"
-    bad = await client.get("/auth/telegram", params=data)
+    bad = await client.get("/auth/callback", params=data)
     assert bad.status_code in {400, 401, 403}

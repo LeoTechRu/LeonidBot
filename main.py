@@ -7,9 +7,8 @@ repository root; tests and external scripts still import ``main``.  After
 refactoring the web application moved under the ``web`` package, so this
 file restores the expected import path.
 """
-from web.main import app  # reuse auth endpoints
-from web.routes import profile, admin
+from web import app
+from web.routes import profile
 
-# Attach routers for profile and admin functionality.
+# Attach profile router; auth and admin included in web.app
 app.include_router(profile.router)
-app.include_router(admin.router, prefix="/admin")

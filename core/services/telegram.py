@@ -47,6 +47,8 @@ class UserService:
             "first_name": kwargs.get("first_name", f"User_{telegram_id}"),
             "role": kwargs.get("role", UserRole.single.value)
         }
+        if "id" in kwargs:
+            required_fields["id"] = kwargs["id"]
 
         # Добавляем опциональные поля
         optional_fields = {

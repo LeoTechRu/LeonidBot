@@ -40,6 +40,14 @@ async def get_current_user(request: Request) -> User:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
     if user_id is None:
+        cookie = request.cookies.get("telegram_id")
+        if cookie:
+            try:
+                user_id = int(cookie)
+            except ValueError as exc:  # pragma: no cover - defensive
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid cookie") from exc
+
+    if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     async with UserService() as service:

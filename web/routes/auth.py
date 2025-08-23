@@ -13,13 +13,13 @@ from fastapi.templating import Jinja2Templates
 import db
 from services.telegram import UserService
 
-
 router = APIRouter(tags=["auth"])
 
 # Configure templates relative to this file
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
+router = APIRouter()
 
 @router.get("/login", response_class=HTMLResponse)
 async def login(request: Request, mode: str = "callback"):
@@ -29,7 +29,6 @@ async def login(request: Request, mode: str = "callback"):
         "auth/login.html",
         {"request": request, "bot_username": bot_username, "mode": mode},
     )
-
 
 async def _validate_telegram_auth(data: Dict[str, str]) -> Dict[str, str]:
     """Validate Telegram login data using HMAC-SHA256."""
@@ -50,7 +49,6 @@ async def _validate_telegram_auth(data: Dict[str, str]) -> Dict[str, str]:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
     return data
 
-
 @router.api_route("/callback", methods=["GET", "POST"])
 async def auth_callback(request: Request):
     """Handle Telegram auth data."""
@@ -68,9 +66,9 @@ async def auth_callback(request: Request):
     async with UserService() as service:
         user, _ = await service.get_or_create_user(
             telegram_id,
-            first_name=valid.get("first_name"),
-            last_name=valid.get("last_name"),
             username=valid.get("username"),
+            first_name=valid.get("first_name"),
+            last_name=valid.get("last_name"),           
             language_code=valid.get("language_code"),
         )
 
