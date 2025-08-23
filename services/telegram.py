@@ -50,6 +50,33 @@ class UserService:
 
         return await self.create_user(**{**required_fields, **optional_fields}), True
 
+    async def get_or_create_by_login_data(self, data: dict) -> Tuple[Optional[User], bool]:
+        """Создает или обновляет пользователя по данным Telegram Login Widget."""
+        telegram_id = data.get("id") or data.get("telegram_id")
+        if telegram_id is None:
+            return None, False
+        telegram_id = int(telegram_id)
+
+        user = await self.get_user_by_telegram_id(telegram_id)
+        fields = {
+            "username": data.get("username"),
+            "first_name": data.get("first_name"),
+            "last_name": data.get("last_name"),
+            "photo_url": data.get("photo_url"),
+        }
+
+        if user:
+            for key, value in fields.items():
+                if value is not None:
+                    setattr(user, key, value)
+            await self.session.flush()
+            return user, False
+
+        user = User(telegram_id=telegram_id, **{k: v for k, v in fields.items() if v is not None})
+        self.session.add(user)
+        await self.session.flush()
+        return user, True
+
     async def get_user_by_telegram_id(self, telegram_id: int) -> Optional[User]:
         """Получает пользователя из БД"""
         try:

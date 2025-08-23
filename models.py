@@ -33,6 +33,7 @@ class User(Base): # Пользователь
     username = Column(String(32))
     first_name = Column(String(255), nullable=False)
     last_name = Column(String(255))
+    photo_url = Column(String(255))
     language_code = Column(String(10))
     is_premium = Column(Boolean, default=False)
     full_display_name = Column(String(255))

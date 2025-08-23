@@ -20,6 +20,13 @@ def test_user_default_role(session):
     assert user.role == UserRole.single.value
 
 
+def test_user_photo_url(session):
+    user = User(id=2, telegram_id=2, first_name='Test', photo_url='http://example.com/photo.jpg')
+    session.add(user)
+    session.flush()
+    assert user.photo_url == 'http://example.com/photo.jpg'
+
+
 def test_group_default_type(session):
     group = Group(id=1, telegram_id=1, title='Group')
     session.add(group)
