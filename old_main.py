@@ -7,7 +7,8 @@ import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from services.telegram import UserService
+# Note: legacy file; updated import for new service structure
+from services import UserService
 from db import db
 from handlers.telegram import user_router, group_router, TelegramMiddleware, setup_dispatcher
 from datetime import datetime

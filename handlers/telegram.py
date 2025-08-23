@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Callable
 from decorators import role_required, group_required
 from models import User, GroupType, LogLevel, UserRole
-from services.telegram import UserService
+from services import UserService, GroupService, LogService
 
 # ==============================
 # РОУТЕРЫ
@@ -148,25 +148,25 @@ async def cmd_contact(message: Message):
 @group_router.message(Command("group"))
 @group_router.message(F.text.lower().in_(["группа", "group"]))
 async def cmd_group(message: Message):
-    async with UserService() as user_service:
+    async with GroupService() as group_service:
         chat = message.chat
         chat_title = chat.title or f"{message.from_user.first_name} группа"
-        group = await user_service.get_group_by_telegram_id(chat.id)
+        group = await group_service.get_group_by_telegram_id(chat.id)
         if not group:
-            group = await user_service.create_group(
+            group = await group_service.create_group(
                 telegram_id=chat.id,
                 title=chat.title or chat_title,
                 type=GroupType(chat.type.lower()),
-                owner_id=message.from_user.id
+                owner_id=message.from_user.id,
             )
             await message.answer(f"Группа '{chat_title}' добавлена в БД. Вы — её создатель.")
             return
-        is_member = await user_service.is_user_in_group(message.from_user.id, chat.id)
+        is_member = await group_service.is_user_in_group(message.from_user.id, chat.id)
         if not is_member:
-            success, response = await user_service.add_user_to_group(message.from_user.id, chat.id)
+            success, response = await group_service.add_user_to_group(message.from_user.id, chat.id)
             await message.answer(response if success else f"Ошибка: {response}")
             return
-        members = await user_service.get_group_members(chat.id)
+        members = await group_service.get_group_members(chat.id)
         if members:
             member_list = "\n".join([m.full_display_name or m.first_name for m in members])
             await message.answer(f"Участники группы '{chat_title}':\n{member_list}")
@@ -188,8 +188,8 @@ async def cmd_set_log_level(message: Message):
     if level not in ["DEBUG", "INFO", "ERROR"]:
         await message.answer("Недопустимый уровень: используйте DEBUG, INFO или ERROR")
         return
-    async with UserService() as user_service:
-        success = await user_service.update_log_level(LogLevel(level), chat_id=message.chat.id)
+    async with LogService() as log_service:
+        success = await log_service.update_log_level(LogLevel(level), chat_id=message.chat.id)
         if success:
             await message.answer(f"Уровень логирования установлен: {level}")
         else:
@@ -197,8 +197,8 @@ async def cmd_set_log_level(message: Message):
 
 @user_router.message(Command("getloglevel"))
 async def cmd_get_log_level(message: Message):
-    async with UserService() as user_service:
-        log_settings = await user_service.get_log_settings()
+    async with LogService() as log_service:
+        log_settings = await log_service.get_log_settings()
         current_level = log_settings.level if log_settings else LogLevel.ERROR
         chat_id = log_settings.chat_id if log_settings else "не задан"
         await message.answer(f"Текущий уровень: {current_level}\nГруппа для логов: {chat_id}")

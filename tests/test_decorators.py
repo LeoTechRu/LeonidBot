@@ -101,7 +101,7 @@ def test_group_required_adds_user(monkeypatch):
         async def add_user_to_group(self, *args, **kwargs):
             return True, 'added'
 
-    monkeypatch.setattr(decorators, 'UserService', lambda: FakeService())
+    monkeypatch.setattr(decorators, 'GroupService', lambda: FakeService())
 
     async def run():
         wrapped = await decorators.group_required(handler)
@@ -134,7 +134,7 @@ def test_group_required_add_user_fail(monkeypatch):
         async def add_user_to_group(self, *args, **kwargs):
             return False, 'error'
 
-    monkeypatch.setattr(decorators, 'UserService', lambda: FakeService())
+    monkeypatch.setattr(decorators, 'GroupService', lambda: FakeService())
 
     async def run():
         wrapped = await decorators.group_required(handler)
