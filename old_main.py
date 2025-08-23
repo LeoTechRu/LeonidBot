@@ -3,19 +3,19 @@
 # from aiogram.filters import Command
 # from aiogram.types import Message
 import logging
-import os
-from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.exceptions import TelegramNetworkError
 from services.telegram import UserService
 from db import db
 from handlers.telegram import user_router, group_router, TelegramMiddleware, setup_dispatcher
 from datetime import datetime
 from models import LogSettings
+from logger import logger
 
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-bot = Bot(token=BOT_TOKEN)
+from core.config import settings
+
+bot = Bot(token=settings.bot_token)
 dp = setup_dispatcher(bot)
 
 async def main():
@@ -36,7 +36,7 @@ async def main():
             else:
                 # Уведомление админа о критической ошибке
                 await bot.send_message(
-                    chat_id=int(os.getenv("ADMIN_CHAT_ID", 0)),
+                    chat_id=settings.admin_chat_id,
                     text="Бот остановлен из-за сетевых проблем"
                 )
 

@@ -6,13 +6,14 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from typing import Optional, List, Tuple, Any
 from datetime import datetime, timedelta
-import os
 from aiogram import Bot
+
+from core.config import settings
 
 
 class UserService:
     def __init__(self):
-        self.admin_chat_id = None
+        self.admin_chat_id = settings.admin_chat_id
         self.session = None
 
     async def __aenter__(self):
@@ -227,16 +228,16 @@ class UserService:
     async def send_log_to_telegram(self, level: LogLevel, message: str):
         """Отправляет лог в Telegram с учетом уровня логирования"""
         try:
-            settings = await self.get_log_settings()
-            if not settings:
+            log_settings = await self.get_log_settings()
+            if not log_settings:
                 return False
             # Проверяем уровень логирования
-            if level.value < settings.level.value:
+            if level.value < log_settings.level.value:
                 return False
             # Отправляем сообщение
-            bot = Bot(token=os.getenv("BOT_TOKEN"))
+            bot = Bot(token=settings.bot_token)
             await bot.send_message(
-                chat_id=settings.chat_id,
+                chat_id=log_settings.chat_id,
                 text=f"[{level.name}] {message}",
                 parse_mode="MarkdownV2"
             )

@@ -4,6 +4,36 @@
 - Для усложнения задачи поставил себе цель прикрутить веб-морду с авторизацией через Telegram.
 - В качестве веб морды буду использовать Flask/FastApi/Django.
 
+## Configuration
+
+Настройки проекта управляются через модуль `core.config`, использующий `pydantic` для чтения
+переменных окружения или файла `.env` в корне репозитория.
+
+Поддерживаемые переменные:
+
+- `BOT_TOKEN` – токен Telegram-бота
+- `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_NAME` – параметры подключения к БД
+- `ADMIN_CHAT_ID` – чат для отправки уведомлений администратору
+
+Пример файла `.env`:
+
+```
+BOT_TOKEN=123456:ABCDEF
+DB_USER=user
+DB_PASSWORD=pass
+DB_HOST=localhost
+DB_NAME=leonid
+ADMIN_CHAT_ID=100500
+```
+
+Для доступа к значениям используйте:
+
+```python
+from core.config import settings
+
+print(settings.bot_token)
+```
+
 ## Backlog внедрения нового функционала:
 - [x] Асинхронный бэкенд на aiogram и SQLAlchemy с подключением к PostgreSQL.
 - [x] Определены модели пользователей, групп, каналов и настроек логирования.
