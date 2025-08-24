@@ -1,8 +1,19 @@
 {% extends "layout.html" %}
 {% block title %}Дашборд{% endblock %}
 {% block content %}
-<h1>Привет, {{ user.first_name }}!</h1>
-<p>Роль: {{ role_name }}</p>
+<header class="user-header">
+    <h1>Привет, {{ user.first_name }}!</h1>
+    <div class="profile-menu">
+        <div id="profile-button" class="profile-icon role-{{ role_name|lower }}">👤</div>
+        <div id="profile-dropdown" class="profile-dropdown">
+            <p class="role">{{ role_name }}</p>
+            <ul>
+                <li><a href="/profile/{{ user.telegram_id }}">Редактировать профиль</a></li>
+                <li><a href="/settings">Настройки</a></li>
+            </ul>
+        </div>
+    </div>
+</header>
 {% if groups %}
 <h2>Ваши группы</h2>
 <ul class="ui-table">
