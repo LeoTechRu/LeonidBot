@@ -90,7 +90,7 @@ async def telegram_callback(request: Request):
         if not created and user and user.role != role.value:
             await service.update_user_role(telegram_id, role)
 
-    response = RedirectResponse("/admin/users", status_code=303)
+    response = RedirectResponse("/start", status_code=303)
     response.set_cookie(
         "telegram_id",
         str(telegram_id),

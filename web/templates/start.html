@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Стартовый дашборд</title>
+</head>
+<body>
+<h1>Добро пожаловать, {{ user.first_name }}!</h1>
+<p>Ваша роль: {{ user.role }}</p>
+<h2>Ваши группы</h2>
+{% if groups %}
+<ul>
+    {% for group in groups %}
+    <li>{{ group.title }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>Вы не состоите ни в одной группе.</p>
+{% endif %}
+</body>
+</html>
