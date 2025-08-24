@@ -1,21 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Groups</title>
-</head>
-<body>
-    <h1>Groups</h1>
-    <ul>
-        {% for item in groups %}
-        <li>
-            {{ item.group.title }} ({{ item.group.participants_count }} members)
-            <ul>
-                {% for member in item.members %}
-                <li>{{ member.first_name }}</li>
-                {% endfor %}
-            </ul>
-        </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+<h1>Groups</h1>
+<ul>
+    {% for item in groups %}
+    <li>
+        {{ item.group.title }} ({{ item.group.participants_count }} members)
+        <ul>
+            {% for member in item.members %}
+            <li>{{ member.first_name }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+    {% endfor %}
+</ul>
+

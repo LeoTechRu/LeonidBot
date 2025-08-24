@@ -1,37 +1,28 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Users</title>
-</head>
-<body>
-    <h1>Users</h1>
-    <p><a href="/admin/groups">Группы</a></p>
-    {% if users %}
-    <table border="1" cellpadding="4" cellspacing="0">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>username</th>
-                <th>first_name</th>
-                <th>last_name</th>
-                <th>role</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for user in users %}
-            <tr>
-                <td>{{ user.telegram_id }}</td>
-                <td>{{ user.username or '' }}</td>
-                <td>{{ user.first_name }}</td>
-                <td>{{ user.last_name or '' }}</td>
-                <td>{{ UserRole(user.role).name }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>нет пользователей</p>
-    {% endif %}
-</body>
-</html>
+<h1>Users</h1>
+{% if users %}
+<table border="1" cellpadding="4" cellspacing="0">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>username</th>
+            <th>first_name</th>
+            <th>last_name</th>
+            <th>role</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+            <td>{{ user.telegram_id }}</td>
+            <td>{{ user.username or '' }}</td>
+            <td>{{ user.first_name }}</td>
+            <td>{{ user.last_name or '' }}</td>
+            <td>{{ UserRole(user.role).name }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>нет пользователей</p>
+{% endif %}
+

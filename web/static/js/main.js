@@ -20,7 +20,30 @@ export function initProfileMenu() {
         dropdown.classList.add('hidden');
     });
 }
+
+export function initAdminMenu() {
+    const links = document.querySelectorAll('.admin-panel a[data-url]');
+    const container = document.getElementById('admin-content');
+    if (!links.length || !container)
+        return;
+    links.forEach((link) => {
+        link.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            const url = link.getAttribute('data-url');
+            if (!url)
+                return;
+            const resp = await fetch(url);
+            if (resp.ok) {
+                container.innerHTML = await resp.text();
+            }
+            else {
+                container.innerHTML = '<p>Ошибка загрузки</p>';
+            }
+        });
+    });
+}
 document.addEventListener('DOMContentLoaded', () => {
     enableAccessibility();
     initProfileMenu();
+    initAdminMenu();
 });
