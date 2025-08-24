@@ -1,24 +1,30 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Дашборд</title>
-</head>
-<body>
-    <h1>Привет, {{ user.first_name }}!</h1>
-    <p>Роль: {{ role_name }}</p>
-    {% if groups %}
-    <h2>Ваши группы</h2>
-    <ul>
-    {% for g in groups %}
-        <li>{{ g.title }}</li>
-    {% endfor %}
-    </ul>
-    {% else %}
-    <p>Вы не состоите ни в одной группе.</p>
-    {% endif %}
-    {% if is_admin %}
-    <p><a href="/admin/users">Админ-панель</a></p>
-    {% endif %}
-</body>
-</html>
+{% extends "layout.html" %}
+{% block title %}Дашборд{% endblock %}
+{% block content %}
+<h2 class="text-3xl font-light mb-4">Привет, {{ user.first_name }}!</h2>
+<p class="mb-6">Роль: {{ role_name }}</p>
+{% if groups %}
+<h3 class="text-2xl font-light mb-2">Ваши группы</h3>
+<div class="overflow-x-auto">
+    <table class="ui-table">
+        <tbody>
+        {% for g in groups %}
+        <tr><td class="p-2">{{ g.title }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="ui-notice">Вы не состоите ни в одной группе.</p>
+{% endif %}
+{% endblock %}
+{% block admin %}
+{% if is_admin %}
+<footer class="admin-panel">
+    <nav class="flex gap-4">
+        <a class="btn" href="/admin/users">Пользователи</a>
+        <a class="btn" href="/admin/groups">Группы</a>
+    </nav>
+</footer>
+{% endif %}
+{% endblock %}

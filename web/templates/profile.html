@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>User Profile</title>
-</head>
-<body>
-    <h1>{{ user.first_name }} {{ user.last_name or '' }}</h1>
-    <p>Username: {{ user.username }}</p>
-    <p>Email: {{ user.email }}</p>
-    <p>Phone: {{ user.phone }}</p>
-    <p>Role: {{ user.role }}</p>
-</body>
-</html>
+{% extends "layout.html" %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+<h2 class="text-3xl font-light mb-4">{{ user.first_name }} {{ user.last_name or '' }}</h2>
+<table class="ui-table">
+    <tr><td class="p-2">Username:</td><td class="p-2">{{ user.username }}</td></tr>
+    <tr><td class="p-2">Email:</td><td class="p-2">{{ user.email }}</td></tr>
+    <tr><td class="p-2">Phone:</td><td class="p-2">{{ user.phone }}</td></tr>
+    <tr><td class="p-2">Role:</td><td class="p-2">{{ user.role }}</td></tr>
+</table>
+{% endblock %}

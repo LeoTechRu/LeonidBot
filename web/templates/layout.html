@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}LeonidBot{% endblock %}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script type="module" src="/static/main.js"></script>
+</head>
+<body class="bg-white text-gray-800">
+<header class="p-4 text-center">
+    <h1 class="text-4xl font-light" style="color: var(--color-accent-2)">LeonidBot</h1>
+</header>
+<main class="container mx-auto p-4">
+    {% block content %}{% endblock %}
+</main>
+{% block admin %}{% endblock %}
+</body>
+</html>

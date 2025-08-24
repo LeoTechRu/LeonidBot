@@ -1,12 +1,17 @@
 """Web application package for FastAPI endpoints."""
+from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from .routes import admin, auth, index, start
 
 app = FastAPI()
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.middleware("http")
