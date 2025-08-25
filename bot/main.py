@@ -6,6 +6,7 @@ from aiogram.exceptions import TelegramNetworkError
 
 from core.db import bot, dp
 from bot.handlers.telegram import user_router, group_router, router
+from bot.handlers.habit import router as habit_router
 from core.logger import LoggerMiddleware
 
 
@@ -15,6 +16,7 @@ async def main() -> None:
     dp.callback_query.middleware(LoggerMiddleware(bot))
     dp.include_router(user_router)
     dp.include_router(group_router)
+    dp.include_router(habit_router)
     dp.include_router(router)
     try:
         await dp.start_polling(bot)
@@ -24,4 +26,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-

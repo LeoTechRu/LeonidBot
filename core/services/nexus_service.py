@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Generic, TypeVar, Type, Optional, List
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +30,11 @@ T = TypeVar("T", bound=db.Base)
 class CRUDService(Generic[T]):
     """Minimal async CRUD helper."""
 
-    def __init__(self, model: Type[T], session: Optional[AsyncSession] = None) -> None:
+    def __init__(
+        self,
+        model: Type[T],
+        session: Optional[AsyncSession] = None,
+    ) -> None:
         self.model = model
         self.session = session
         self._external = session is not None
@@ -93,6 +98,38 @@ class ProjectService(CRUDService[Project]):
 class HabitService(CRUDService[Habit]):
     def __init__(self, session: Optional[AsyncSession] = None) -> None:
         super().__init__(Habit, session)
+
+    async def toggle_progress(
+        self, habit_id: int, day: date | None = None
+    ) -> bool:
+        """Toggle completion state for a habit on a specific day.
+
+        Progress is stored inside the ``metrics`` JSON field under the key
+        ``"progress"`` as a mapping ``{date_str: bool}`` where ``date_str`` is
+        an ISO formatted string. When toggled to ``True`` the day is marked as
+        completed, otherwise it is removed/marked as not completed.
+
+        Args:
+            habit_id: ID of the habit to update.
+            day: Date for which the progress should be toggled. Defaults to
+                today.
+
+        Returns:
+            ``True`` if the habit was found and updated, ``False`` otherwise.
+        """
+        habit = await self.get(habit_id)
+        if habit is None:
+            return False
+
+        metrics = habit.metrics or {}
+        progress: dict = metrics.get("progress", {}) or {}
+        day_str = (day or date.today()).isoformat()
+        current = progress.get(day_str, False)
+        progress[day_str] = not current
+        metrics["progress"] = progress
+        habit.metrics = metrics
+        await self.session.flush()
+        return True
 
 
 class ResourceService(CRUDService[Resource]):
