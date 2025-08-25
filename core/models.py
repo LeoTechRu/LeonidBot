@@ -129,6 +129,12 @@ class UserGroup(Base):  # Связь пользователь-группа (мн
 # ---------------------------------------------------------------------------
 
 
+class TaskStatus(PyEnum):
+    pending = "pending"
+    in_progress = "in_progress"
+    done = "done"
+
+
 class Task(Base):
     """Basic task item owned by a telegram user."""
 
@@ -139,7 +145,7 @@ class Task(Base):
     title = Column(String(255), nullable=False)
     description = Column(String(500))
     due_date = Column(DateTime)
-    is_done = Column(Boolean, default=False)
+    status = Column(Enum(TaskStatus), default=TaskStatus.pending)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
