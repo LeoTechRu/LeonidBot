@@ -9,20 +9,30 @@ import builtins
 import sys
 
 from base import Base
-import core.models  # ensure models are loaded
+import core.models  # noqa: F401  # ensure models are loaded
 
 load_dotenv()
 
-# Database configuration
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+# Database configuration with graceful fallback
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_NAME = os.getenv("DB_NAME")
+    if all([DB_USER, DB_PASSWORD, DB_HOST, DB_NAME]):
+        DATABASE_URL = (
+            f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+        )
+    else:
+        # Default to a local SQLite database for development/tests
+        DATABASE_URL = "sqlite+aiosqlite:///./leonidbot.db"
 
 # Async engine and session
 engine = create_async_engine(DATABASE_URL)
-async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+async_session = sessionmaker(
+    engine, expire_on_commit=False, class_=AsyncSession
+)
 
 
 async def init_models() -> None:
@@ -40,6 +50,5 @@ except Exception:
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
-# Make this module accessible as ``db`` to satisfy tests without explicit import
+# Make this module accessible as ``db`` for tests
 builtins.db = sys.modules[__name__]
-
