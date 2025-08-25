@@ -120,6 +120,21 @@ class UserGroup(Base):  # Связь пользователь-группа (мн
     joined_at = Column(DateTime, default=utcnow)
 
 
+class Task(Base):
+    """Simple task model belonging to a Telegram user."""
+
+    __tablename__ = "tasks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    owner_id = Column(Integer, ForeignKey("tg_users.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(String(1000))
+    due_date = Column(DateTime)
+    is_completed = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
 # Модели для логгера:
 class LogLevel(IntEnum):
     """Уровни логирования по аналогии со стандартным ``logging``.
