@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from base import Base
 from core.services.telegram_user_service import TelegramUserService
 from core.services.web_user_service import WebUserService
+from core.services.task_service import TaskService
 
 
 @pytest_asyncio.fixture
@@ -62,3 +63,18 @@ async def test_update_profile_and_lookup(session):
     assert by_id.id == user.id
     by_tg = await wsvc.get_user_by_identifier(555)
     assert by_tg.id == user.id
+
+
+@pytest.mark.asyncio
+async def test_task_service_flow(session):
+    tsvc = TelegramUserService(session)
+    await tsvc.create_user(telegram_id=1, username="alice")
+    svc = TaskService(session)
+    task = await svc.create_task(owner_id=1, title="Test task")
+    assert task.id is not None
+    tasks = await svc.list_tasks(owner_id=1)
+    assert len(tasks) == 1
+    assert tasks[0].title == "Test task"
+    await svc.mark_done(task.id)
+    tasks = await svc.list_tasks(owner_id=1)
+    assert tasks[0].is_done is True

@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from base import Base
-from core.models import TgUser, WebUser
+from core.models import TgUser, WebUser, Task
 
 
 @pytest.fixture()
@@ -34,3 +34,14 @@ def test_web_user_unique_username(session):
     session.add(WebUser(username="webalice", password_hash="y"))
     with pytest.raises(Exception):
         session.flush()
+
+
+def test_task_defaults(session):
+    tg = TgUser(telegram_id=123, username="tg")
+    session.add(tg)
+    session.commit()
+    task = Task(owner_id=123, title="Test")
+    session.add(task)
+    session.commit()
+    assert task.id is not None
+    assert task.is_done is False
