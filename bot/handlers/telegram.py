@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime
 from typing import Callable
-from decorators import role_required, group_required
+from decorators import role_required
 from core.models import GroupType, LogLevel, UserRole
 from core.services.telegram_user_service import TelegramUserService
 
@@ -65,6 +65,9 @@ def validate_birthday(date_str: str) -> bool:
 
 def validate_group_description(desc: str) -> bool:
     return len(desc) <= 500
+
+def validate_fullname(name: str) -> bool:
+    return 0 < len(name) <= 100
 
 # -----------------------------
 # Состояния FSM
@@ -154,6 +157,24 @@ async def cmd_contact(message: Message):
     lines.append("/setbirthday - установить день рождения")
 
     await message.answer("\n".join(lines))
+
+
+@user_router.message(Command("setfullname"))
+async def cmd_set_fullname(message: Message, state: FSMContext):
+    await message.answer("Введите отображаемое имя:")
+    await state.set_state(UpdateDataStates.waiting_for_fullname)
+
+
+@user_router.message(UpdateDataStates.waiting_for_fullname)
+async def process_fullname(message: Message, state: FSMContext):
+    await process_data_input(
+        message,
+        state,
+        validate_fullname,
+        TelegramUserService.update_full_display_name,
+        "Имя обновлено: {data}",
+        "Имя должно быть непустым и не длиннее 100 символов",
+    )
 
 # -----------------------------
 # Группы

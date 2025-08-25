@@ -275,6 +275,22 @@ class TelegramUserService:
             "role_name": user.role,
         }
 
+    async def update_full_display_name(
+        self, telegram_id: int, name: str
+    ) -> bool:
+        """Update user's custom display name stored in ``bot_settings``."""
+
+        user = await self.get_user_by_telegram_id(telegram_id)
+        if not user:
+            return False
+        existing = (
+            user.bot_settings if isinstance(user.bot_settings, dict) else {}
+        )
+        user.bot_settings = {**existing, "full_display_name": name}
+        user.updated_at = utcnow()
+        await self.session.flush()
+        return True
+
     async def update_user_profile(
         self, telegram_id: int, data: Dict[str, Any]
     ) -> Optional[TgUser]:

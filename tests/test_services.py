@@ -1,9 +1,6 @@
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from base import Base
@@ -16,7 +13,9 @@ async def session():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with async_session() as sess:
         yield sess
 
@@ -62,3 +61,13 @@ async def test_update_profile_and_lookup(session):
     assert by_id.id == user.id
     by_tg = await wsvc.get_user_by_identifier(555)
     assert by_tg.id == user.id
+
+
+@pytest.mark.asyncio
+async def test_update_full_display_name(session):
+    tsvc = TelegramUserService(session)
+    await tsvc.update_from_telegram(telegram_id=42, username="tg")
+    ok = await tsvc.update_full_display_name(42, "Alice Smith")
+    assert ok is True
+    user = await tsvc.get_user_by_telegram_id(42)
+    assert user.bot_settings["full_display_name"] == "Alice Smith"
