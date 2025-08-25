@@ -153,6 +153,25 @@ class Task(Base):
 
 
 # ---------------------------------------------------------------------------
+# Reminder model
+# ---------------------------------------------------------------------------
+
+
+class Reminder(Base):
+    """Reminder item optionally linked to a task."""
+
+    __tablename__ = "reminders"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    owner_id = Column(BigInteger, ForeignKey("tg_users.telegram_id"))
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    message = Column(String(500))
+    remind_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+# ---------------------------------------------------------------------------
 # TimeEntry model
 # ---------------------------------------------------------------------------
 
