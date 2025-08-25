@@ -32,25 +32,30 @@ class ReminderService:
             await self.session.close()
 
     async def create_reminder(
-        self, owner_id: int, message: str, remind_at
+        self, owner_id: int, message: str, remind_at, task_id: int | None = None
     ) -> Reminder:
         """Create a new reminder for the given owner."""
 
         reminder = Reminder(
-            owner_id=owner_id, message=message, remind_at=remind_at
+            owner_id=owner_id,
+            message=message,
+            remind_at=remind_at,
+            task_id=task_id,
         )
         self.session.add(reminder)
         await self.session.flush()
         return reminder
 
     async def list_reminders(
-        self, owner_id: Optional[int] = None
+        self, owner_id: Optional[int] = None, task_id: Optional[int] = None
     ) -> List[Reminder]:
-        """Return reminders, optionally filtered by owner."""
+        """Return reminders, optionally filtered by owner or task."""
 
         stmt = select(Reminder)
         if owner_id is not None:
             stmt = stmt.where(Reminder.owner_id == owner_id)
+        if task_id is not None:
+            stmt = stmt.where(Reminder.task_id == task_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 

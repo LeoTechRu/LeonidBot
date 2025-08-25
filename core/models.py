@@ -164,6 +164,7 @@ class Reminder(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     owner_id = Column(BigInteger, ForeignKey("tg_users.telegram_id"))
+    task_id = Column(Integer, ForeignKey("tasks.id"))
     message = Column(String(500), nullable=False)
     remind_at = Column(DateTime, nullable=False)
     is_done = Column(Boolean, default=False)
