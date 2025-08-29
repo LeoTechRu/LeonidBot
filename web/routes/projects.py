@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from pydantic import BaseModel
+from uuid import UUID
 
 from core.models import Project, TgUser, WebUser
 from core.services.para_service import ParaService
+from core.services.project_notification_service import add_project_notification
 from web.dependencies import get_current_tg_user, get_current_web_user
 from ..template_env import templates
 
@@ -32,6 +34,16 @@ class ProjectResponse(BaseModel):
     @classmethod
     def from_model(cls, p: Project) -> "ProjectResponse":
         return cls(id=p.id, name=p.name, area_id=p.area_id, description=p.description, slug=p.slug)
+
+
+class ChannelPayload(BaseModel):
+    type: str
+    address: Dict[str, Any]
+
+
+class ProjectNotificationIn(BaseModel):
+    channel: ChannelPayload
+    rules: Dict[str, Any]
 
 
 @router.get("", response_model=List[ProjectResponse])
@@ -62,6 +74,18 @@ async def create_project(payload: ProjectCreate, current_user: TgUser | None = D
         except PermissionError as e:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     return ProjectResponse.from_model(p)
+
+
+@router.post("/{project_id}/notifications", status_code=status.HTTP_201_CREATED)
+async def create_project_notification(
+    project_id: UUID,
+    payload: ProjectNotificationIn,
+    current_user: TgUser | None = Depends(get_current_tg_user),
+):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    await add_project_notification(project_id, payload.channel.dict(), payload.rules)
+    return {"ok": True}
 
 
 @ui_router.get("")

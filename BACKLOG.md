@@ -79,6 +79,7 @@
 - `POST /projects/42/notifications` с `chat_id=-1001` привязывает канал.
 - Создание элемента отправляет в Telegram `sendMessage` в канал.
 - Элемент со стартом `2025-05-01T09:00Z` и `pre_due=30m` шлёт сообщение в `08:30Z`.
+- Документация: [как добавить бота и получить chat_id](./docs/notifications/telegram.md).
 
 ### E6: ICS-фиды с VEVENT/VTODO+VALARM
 **User Stories**

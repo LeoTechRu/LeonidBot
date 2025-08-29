@@ -1,6 +1,7 @@
 """Database models used by the application."""
 from enum import IntEnum, Enum as PyEnum
 from datetime import date
+from uuid import uuid4
 
 from .db import bcrypt
 
@@ -22,6 +23,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Index,
 )
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from base import Base
@@ -665,3 +667,33 @@ class LogSettings(Base):
     )
     def __repr__(self) -> str:  # pragma: no cover - debug aid
         return f"<LogSettings(level='{self.level}', chat_id='{self.chat_id}')>"
+
+
+# ---------------------------------------------------------------------------
+# Project notifications
+# ---------------------------------------------------------------------------
+
+
+class NotificationTrigger(Base):
+    """Scheduled notification for a project."""
+
+    __tablename__ = "triggers"
+
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    project_id = Column(PGUUID(as_uuid=True), nullable=False)
+    channel_id = Column(PGUUID(as_uuid=True), nullable=False)
+    next_fire_at = Column(DateTime(timezone=True), nullable=False)
+    alarm_id = Column(PGUUID(as_uuid=True))
+    rule = Column(JSON)
+    dedupe_key = Column(String(255), unique=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class SentNotification(Base):
+    """Log of sent notifications to ensure idempotency."""
+
+    __tablename__ = "notifications"
+
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    dedupe_key = Column(String(255), unique=True, nullable=False)
+    sent_at = Column(DateTime(timezone=True), default=utcnow)

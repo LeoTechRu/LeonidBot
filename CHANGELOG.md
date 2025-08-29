@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Каркас календаря: модель `CalendarEvent`, `CalendarService`.
 - REST-эндпоинты `/api/v1/app-settings` и загрузка динамических персон UI через `app_settings`.
 - Персонализированная шапка с названием системы и подсказкой в зависимости от роли.
+- Сервис проектных уведомлений с каналами Telegram и воркером триггеров.
 
 ### Changed
 - Унифицирована работа с паролями через обёртку `core.db.bcrypt` и `WebUserService`.
