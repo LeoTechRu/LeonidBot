@@ -15,6 +15,9 @@ from typing import Awaitable, Callable, Iterable
 from core.logger import logger
 from core.utils import utcnow
 from .reminder_service import ReminderService
+from .alarm_service import AlarmService
+from core.models import CalendarEvent
+from core.db import bot
 
 
 Sender = Callable[[int, str], Awaitable[None]]
@@ -26,6 +29,14 @@ async def default_sender(owner_id: int, text: str) -> None:
     Безопасно для офлайн/тестовой среды.
     """
     logger.info(f"[reminder] →{owner_id}: {text}")
+
+
+async def telegram_sender(chat_id: int, text: str) -> None:
+    """Send a Telegram message using the global bot."""
+    try:
+        await bot.send_message(chat_id, text)
+    except Exception:
+        logger.exception("Не удалось отправить сообщение", extra={"chat_id": chat_id})
 
 
 async def fetch_due_reminders(limit: int | None = None):
@@ -90,6 +101,57 @@ async def run_reminder_dispatcher(
                 pass
     finally:
         logger.info("Reminder dispatcher: остановка")
+
+
+async def fetch_due_alarms(limit: int | None = None):
+    """Вернуть просроченные тревоги календаря."""
+    now = utcnow()
+    async with AlarmService() as service:
+        alarms = await service.list_alarms()
+        due = [a for a in alarms if a.notify_at <= now]
+        if limit:
+            due = due[:limit]
+        return due
+
+
+async def run_alarm_dispatcher(
+    *,
+    poll_interval: float = 60.0,
+    sender: Sender | None = None,
+    jitter: float = 5.0,
+    stop_event: asyncio.Event | None = None,
+) -> None:
+    """Цикл отправки тревог календаря."""
+    import random
+
+    _sender = sender or telegram_sender
+    _stop = stop_event or asyncio.Event()
+    logger.info("Alarm dispatcher: старт")
+    try:
+        while not _stop.is_set():
+            due = await fetch_due_alarms()
+            if due:
+                logger.debug(f"Alarm dispatcher: к отправке {len(due)} шт.")
+            for a in due:
+                try:
+                    async with AlarmService() as svc:
+                        event = await svc.session.get(CalendarEvent, a.event_id)
+                        text = event.title if event else "Событие"
+                        await _sender(a.owner_id, text)
+                        from web.config import S
+                        channel_id = getattr(S, "NOTIFY_CHANNEL_ID", None)
+                        if channel_id:
+                            await _sender(int(channel_id), text)
+                        await svc.delete_alarm(a.id)
+                except Exception:
+                    logger.exception("Ошибка отправки тревоги", extra={"id": a.id})
+            sleep_for = poll_interval + random.uniform(0, max(jitter, 0.0))
+            try:
+                await asyncio.wait_for(_stop.wait(), timeout=sleep_for)
+            except asyncio.TimeoutError:
+                pass
+    finally:
+        logger.info("Alarm dispatcher: остановка")
 
 
 def is_scheduler_enabled() -> bool:

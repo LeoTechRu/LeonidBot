@@ -30,6 +30,7 @@ class EnvSettings(BaseSettings):
 
     ADMIN_CHAT_ID: Optional[str] = None
     ADMIN_TELEGRAM_IDS: str = ""
+    NOTIFY_CHANNEL_ID: Optional[str] = None
 
     # Web/Auth
     WEB_APP_URL: AnyHttpUrl | None = None  # type: ignore[assignment]
@@ -158,6 +159,9 @@ class Settings:
     @property
     def ADMIN_IDS(self):
         return self._env.ADMIN_TELEGRAM_IDS
+    @property
+    def NOTIFY_CHANNEL_ID(self):
+        return self._env.NOTIFY_CHANNEL_ID
     # expose raw env for DB/Redis etc
     @property
     def env(self):

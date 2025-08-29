@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
-from core.models import CalendarEvent, TgUser
+from core.models import CalendarEvent, CalendarAlarm, TgUser, WebUser
 from core.services.calendar_service import CalendarService
+from core.services.alarm_service import AlarmService
 from web.dependencies import get_current_tg_user, get_current_web_user
-from core.models import WebUser
+from core.db import bot
+from web.config import S
 from ..template_env import templates
 
 
@@ -117,6 +119,67 @@ async def list_events(
     return [EventResponse.from_model(e) for e in events]
 
 
+@router.get("/agenda", response_model=List[EventResponse])
+async def agenda(
+    start: datetime | None = None,
+    end: datetime | None = None,
+    current_user: TgUser | None = Depends(get_current_tg_user),
+):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    from core.utils import utcnow
+
+    _start = start or utcnow()
+    _end = end or (_start + timedelta(days=1))
+    async with CalendarService() as service:
+        events = await service.list_events(
+            owner_id=current_user.telegram_id, start=_start, end=_end
+        )
+    return [EventResponse.from_model(e) for e in events]
+
+
+class AlarmCreate(BaseModel):
+    event_id: int
+    notify_at: datetime
+
+
+class AlarmResponse(BaseModel):
+    id: int
+    event_id: int
+    notify_at: datetime
+
+    @classmethod
+    def from_model(cls, alarm: CalendarAlarm) -> "AlarmResponse":
+        return cls(id=alarm.id, event_id=alarm.event_id, notify_at=alarm.notify_at)
+
+
+@router.get("/alarms", response_model=List[AlarmResponse])
+async def list_alarms(
+    current_user: TgUser | None = Depends(get_current_tg_user),
+):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    async with AlarmService() as service:
+        alarms = await service.list_alarms(owner_id=current_user.telegram_id)
+    return [AlarmResponse.from_model(a) for a in alarms]
+
+
+@router.post("/alarms", response_model=AlarmResponse, status_code=status.HTTP_201_CREATED)
+async def create_alarm(
+    payload: AlarmCreate,
+    current_user: TgUser | None = Depends(get_current_tg_user),
+):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    async with AlarmService() as service:
+        alarm = await service.create_alarm(
+            owner_id=current_user.telegram_id,
+            event_id=payload.event_id,
+            notify_at=payload.notify_at,
+        )
+    return AlarmResponse.from_model(alarm)
+
+
 @router.post(
     "",
     response_model=EventResponse,
@@ -138,6 +201,19 @@ async def create_event(
             end_at=payload.end_at,
             description=payload.description,
         )
+    # default alarm at event start
+    async with AlarmService() as alarm_service:
+        await alarm_service.create_alarm(
+            owner_id=current_user.telegram_id,
+            event_id=event.id,
+            notify_at=payload.start_at,
+        )
+    channel_id = getattr(S, "NOTIFY_CHANNEL_ID", None)
+    if channel_id:
+        try:
+            await bot.send_message(int(channel_id), f"Создано событие: {event.title}")
+        except Exception:
+            pass
     return EventResponse.from_model(event)
 
 

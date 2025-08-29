@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import List, Optional
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,12 +53,21 @@ class CalendarService:
         await self.session.flush()
         return event
 
-    async def list_events(self, owner_id: Optional[int] = None) -> List[CalendarEvent]:
-        """Return events, optionally filtered by owner."""
+    async def list_events(
+        self,
+        owner_id: Optional[int] = None,
+        start: datetime | None = None,
+        end: datetime | None = None,
+    ) -> List[CalendarEvent]:
+        """Return events with optional owner and time range filters."""
 
         stmt = select(CalendarEvent)
         if owner_id is not None:
             stmt = stmt.where(CalendarEvent.owner_id == owner_id)
+        if start is not None:
+            stmt = stmt.where(CalendarEvent.start_at >= start)
+        if end is not None:
+            stmt = stmt.where(CalendarEvent.start_at <= end)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 

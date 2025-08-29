@@ -7,6 +7,7 @@ from .telegram_user_service import TelegramUserService
 from .time_service import TimeService
 from .web_user_service import WebUserService
 from .favorite_service import FavoriteService
+from .alarm_service import AlarmService
 
 __all__ = [
     "NoteService",
@@ -16,4 +17,5 @@ __all__ = [
     "TimeService",
     "WebUserService",
     "FavoriteService",
+    "AlarmService",
 ]

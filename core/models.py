@@ -336,6 +336,22 @@ class CalendarEvent(Base):
 
 
 # ---------------------------------------------------------------------------
+# CalendarAlarm model
+# ---------------------------------------------------------------------------
+
+class CalendarAlarm(Base):
+    """Alarm linked to a calendar event."""
+
+    __tablename__ = "calendar_alarms"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    event_id = Column(Integer, ForeignKey("calendar_events.id"), nullable=False)
+    owner_id = Column(BigInteger, ForeignKey("users_tg.telegram_id"), nullable=False)
+    notify_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+# ---------------------------------------------------------------------------
 # TimeEntry model
 # ---------------------------------------------------------------------------
 

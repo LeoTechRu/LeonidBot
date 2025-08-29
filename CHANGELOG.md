@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Тайм‑трекер: модель `TimeEntry`, `TimeService`, веб‑API `/time`, страница UI, команды бота `/time_start`, `/time_stop`, `/time_list`.
 - Каркас системы напоминаний: модель `Reminder`, `ReminderService`, привязка к задачам.
 - Каркас календаря: модель `CalendarEvent`, `CalendarService`.
+- Таблица `calendar_alarms`, API `/calendar/agenda` и CRUD тревог.
+- Отправка тревог календаря в Telegram и проектный канал.
 - REST-эндпоинты `/api/v1/app-settings` и загрузка динамических персон UI через `app_settings`.
 - Персонализированная шапка с названием системы и подсказкой в зависимости от роли.
 
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LogLevel` переведён на числовой `IntEnum` для корректных сравнений.
 - Обновлены шаблоны и хэндлеры под текущее API FastAPI/Starlette; переход на lifespan‑события.
 - API жёстко переведён на `/api/v1` без редиректов и хвостовых слэшей; старые `/api/*` возвращают `404`.
+- `/reminders` переведён в read-only и переадресует на `/calendar/agenda`.
 
 ### Fixed
 - Исправлены сравнения уровней логирования после перехода на `IntEnum`.
