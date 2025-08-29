@@ -24,6 +24,15 @@
 - Changelog: [CHANGELOG.md](./CHANGELOG.md)
 - Backlog: [BACKLOG.md](./BACKLOG.md)
 
+## Calendar ICS feed
+Экспорт задач и событий доступен по ссылке вида
+`/calendar/feed.ics?scope=all&id=<id>&token=<token>`.
+
+### Подписка
+- **Google Calendar**: Настройки → Добавить календарь по URL → вставьте ссылку.
+- **Outlook**: Добавить календарь → Из интернета → укажите ссылку.
+- **Apple Calendar**: Файл → Новая подписка на календарь… → вставьте ссылку.
+
 ## Persona in header via app_settings (no roles in UI)
 Персональные тексты для шапки берутся из `app_settings` по ключам
 `ui.persona.<backendRole>.<field>.<locale>`, где `backendRole` — одна из `single|multiplayer|moderator|admin`.

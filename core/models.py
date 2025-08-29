@@ -335,6 +335,17 @@ class CalendarEvent(Base):
     )
 
 
+class CalendarFeedToken(Base):
+    """Access token for exporting calendar data as an ICS feed."""
+
+    __tablename__ = "calendar_feed_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    owner_id = Column(BigInteger, ForeignKey("users_tg.telegram_id"), unique=True)
+    token_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
 # ---------------------------------------------------------------------------
 # TimeEntry model
 # ---------------------------------------------------------------------------
