@@ -39,6 +39,9 @@ class EnvSettings(BaseSettings):
     RECAPTCHA_SITE_KEY: Optional[str] = None
     RECAPTCHA_SECRET_KEY: Optional[str] = None
 
+    # Features
+    CALENDAR_V2_ENABLED: bool = False
+
     # pydantic-settings v2 style configuration
     model_config = SettingsConfigDict(
         env_file=os.getenv("LEONIDPRO_ENV_FILE", ".env"),
@@ -158,6 +161,10 @@ class Settings:
     @property
     def ADMIN_IDS(self):
         return self._env.ADMIN_TELEGRAM_IDS
+
+    @property
+    def CALENDAR_V2_ENABLED(self):
+        return bool(self._env.CALENDAR_V2_ENABLED)
     # expose raw env for DB/Redis etc
     @property
     def env(self):

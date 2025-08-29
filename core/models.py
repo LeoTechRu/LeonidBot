@@ -329,6 +329,8 @@ class CalendarEvent(Base):
     start_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
     end_at = Column(DateTime(timezone=True))
     description = Column(String(500))
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    area_id = Column(Integer, ForeignKey("areas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utcnow)
     updated_at = Column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -430,6 +432,29 @@ class Project(Base):
     archived_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class ProjectMemberRole(PyEnum):
+    """Role of a user within a project for multiplayer mode."""
+
+    owner = "owner"
+    manager = "manager"
+    member = "member"
+    guest = "guest"
+
+
+class ProjectMember(Base):
+    """Link between projects and users with role-based access."""
+
+    __tablename__ = "project_members"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users_tg.telegram_id"), nullable=False)
+    role = Column(Enum(ProjectMemberRole), default=ProjectMemberRole.member)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("project_id", "user_id"),)
 
 
 class Habit(Base):

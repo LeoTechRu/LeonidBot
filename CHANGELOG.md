@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Каркас календаря: модель `CalendarEvent`, `CalendarService`.
 - REST-эндпоинты `/api/v1/app-settings` и загрузка динамических персон UI через `app_settings`.
 - Персонализированная шапка с названием системы и подсказкой в зависимости от роли.
+- Режимы single/multiplayer с ролями проектов и ACL.
+- `/calendar/agenda` и защищённый `feed.ics` с токеном.
+- Фичефлаг `CALENDAR_V2_ENABLED` и баннер «новый календарь».
 
 ### Changed
 - Унифицирована работа с паролями через обёртку `core.db.bcrypt` и `WebUserService`.

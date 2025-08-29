@@ -3,6 +3,9 @@
 {% block content %}
 <div class="ui-layout">
   <div id="main-content">
+    {% if CALENDAR_V2_ENABLED %}
+    <div class="ui-notice">новый календарь</div>
+    {% endif %}
     <div class="ui-notice">Создавайте события и просматривайте календарь.</div>
 
     <section class="card" style="margin-bottom:1rem;">

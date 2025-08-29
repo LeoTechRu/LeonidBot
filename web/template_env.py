@@ -24,6 +24,7 @@ templates.env.globals.update(
     TG_BOT_USERNAME=S.BOT_USERNAME,
     BOT_USERNAME=("@" + (S.BOT_USERNAME or "").lstrip("@")) if S.BOT_USERNAME else None,
     RECAPTCHA_SITE_KEY=S.RECAPTCHA_SITE_KEY,
+    CALENDAR_V2_ENABLED=S.CALENDAR_V2_ENABLED,
 )
 
 __all__ = ["templates"]

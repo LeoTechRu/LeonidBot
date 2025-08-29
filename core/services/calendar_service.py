@@ -38,6 +38,8 @@ class CalendarService:
         start_at,
         end_at=None,
         description: str | None = None,
+        project_id: int | None = None,
+        area_id: int | None = None,
     ) -> CalendarEvent:
         """Create a new calendar event for the given owner."""
 
@@ -47,6 +49,8 @@ class CalendarService:
             start_at=start_at,
             end_at=end_at,
             description=description,
+            project_id=project_id,
+            area_id=area_id,
         )
         self.session.add(event)
         await self.session.flush()
@@ -58,6 +62,25 @@ class CalendarService:
         stmt = select(CalendarEvent)
         if owner_id is not None:
             stmt = stmt.where(CalendarEvent.owner_id == owner_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def list_agenda(
+        self,
+        owner_id: int,
+        start,
+        end,
+        project_id: int | None = None,
+    ) -> List[CalendarEvent]:
+        """Return events for owner in the given time range."""
+
+        stmt = select(CalendarEvent).where(
+            CalendarEvent.owner_id == owner_id,
+            CalendarEvent.start_at >= start,
+            CalendarEvent.start_at <= end,
+        )
+        if project_id is not None:
+            stmt = stmt.where(CalendarEvent.project_id == project_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
